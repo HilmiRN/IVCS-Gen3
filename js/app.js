@@ -17,7 +17,7 @@ tp.onclick=$('#up').onclick=()=>scrollTo({top:0});
 // members (26 = 14 in 10A + 12 in 10B)
 const CATS=['Kegiatan','Kebersamaan','Pondok','Acara'],HH=[420,300,520,360,480,320,400,280,440],arr=(a,d)=>Array.isArray(a)?a:d;
 const E={
-m:arr(DATA.m,Array.from({length:26},(_,i)=>({n:'Anggota '+String(i+1).padStart(2,'0')}))).map((x,i)=>({n:x.n||'',r:x.r||'',p:x.p||'',k:x.k||(i<14?'10A':'10B')})),
+m:arr(DATA.m,Array.from({length:26},(_,i)=>({n:'Anggota '+String(i+1).padStart(2,'0')}))).map((x,i)=>({n:x.n||'',r:x.r||'',p:x.p||'',k:x.k||(i<14?'10A':'10B'),ig:x.ig||'',li:x.li||'',gh:x.gh||'',pf:x.pf||'',mt:x.mt||''})),
 piket:{},
 g:arr(DATA.g,Array.from({length:9},()=>({}))).map((x,i)=>({c:x.c||CATS[i%4],t:x.t||'',p:x.p||''})),
 a:arr(DATA.a,['Akademik','Non-akademik','Kompetisi','Kontribusi untuk pondok'].map(t=>({t,v:''}))),
@@ -35,7 +35,7 @@ const M=E.m.map((x,i)=>({...x,n:x.n||'Anggota '+String(i+1).padStart(2,'0'),i:i+
 $('#hc').textContent=M.length;$('#f0').textContent='Semua · '+M.length;$('#f1').textContent='Kelas 10A · '+M.filter(m=>m.k=='10A').length;$('#f2').textContent='Kelas 10B · '+M.filter(m=>m.k=='10B').length;
 let mf='';const gm=$('#gm');const rm=()=>{const q=$('#sq').value.toLowerCase();gm.innerHTML=M.filter(m=>(!mf||m.k==mf)&&m.n.toLowerCase().includes(q)).map(m=>`<button class="m" style="--d:${m.i%6}" data-i="${m.i}"><div class="ph">${m.p?`<img src="${m.p}" alt="" style="width:100%;height:100%;object-fit:cover">`:`<b>${String(m.i).padStart(2,'0')}</b>`}</div><h3>${esc(m.n)}</h3><p>Kelas ${m.k}${m.r?' · '+esc(m.r):''}</p></button>`).join('')||'<p class="mu">Tidak ada anggota yang cocok.</p>'};rm();
 $('#sq').oninput=rm;$$('[data-f]').forEach(b=>b.onclick=()=>{mf=b.dataset.f;$$('[data-f]').forEach(x=>x.classList.toggle('on',x==b));rm()});
-gm.onclick=e=>{const b=e.target.closest('.m');if(b){const m=M[b.dataset.i-1];openLb(`${m.n} · Kelas ${m.k}${m.r?' — '+m.r:''}`,'Profil anggota',null,m.p)}};
+gm.onclick=e=>{const b=e.target.closest('.m');if(b){const m=M[b.dataset.i-1];openPm(m)}};
 // piket
 const D=['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],td=(new Date().getDay()+6)%7;let pk='10A';
 const rp=()=>$('#dy').innerHTML=D.map((d,i)=>`<div class="dc${i==td?' td':''}"><h3>${d}</h3>${PN(pk,i).map(n=>`<label><input type="checkbox"> ${esc(n)}</label>`).join('')}</div>`).join('');rp();
@@ -50,6 +50,12 @@ const showG=()=>{const g=gv[gi];openLb(g.t||'Foto '+String(g.i+1).padStart(2,'0'
 $('#gl').onclick=e=>{const b=e.target.closest('[data-j]');if(b){gi=+b.dataset.j;showG()}};
 const mv=d=>{if(lb.dataset.g){gi=(gi+d+gv.length)%gv.length;showG()}};$('#pv').onclick=()=>mv(-1);$('#nx').onclick=()=>mv(1);$('#cl').onclick=()=>lb.classList.remove('o');lb.onclick=e=>{if(e.target==lb)lb.classList.remove('o')};
 addEventListener('keydown',e=>{if(!lb.classList.contains('o'))return;if(e.key=='Escape')lb.classList.remove('o');if(e.key=='ArrowLeft')mv(-1);if(e.key=='ArrowRight')mv(1)});
+// profil anggota: klik kartu → modal foto besar + moto + tautan (portofolio ditonjolkan, lalu IG/LinkedIn/GitHub)
+const pmEl=document.createElement('div');pmEl.id='pm';pmEl.className='pm';pmEl.innerHTML='<div class="pm-card"><button class="pm-x" aria-label="Tutup profil">×</button><div class="pm-ph"></div><div class="pm-info"><div class="pm-meta"></div><h3 class="pm-n"></h3><p class="pm-mt"></p><div class="pm-links"></div></div></div>';document.body.appendChild(pmEl);
+const pml=(l,u,c)=>u?'<a class="pm-l '+(c||'')+'" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+l+'</a>':'';
+function openPm(m){pmEl.querySelector('.pm-ph').innerHTML=m.p?'<img src="'+m.p+'" alt="">':'<b>'+String(m.i).padStart(2,'0')+'</b>';pmEl.querySelector('.pm-n').textContent=m.n;pmEl.querySelector('.pm-meta').textContent='Kelas '+m.k+(m.r?' · '+m.r:'');const mt=pmEl.querySelector('.pm-mt');if(m.mt){mt.textContent='"'+m.mt+'"';mt.hidden=false}else mt.hidden=true;pmEl.querySelector('.pm-links').innerHTML=pml('Portofolio',m.pf,'pm-pf')+pml('Instagram',m.ig)+pml('LinkedIn',m.li)+pml('GitHub',m.gh);pmEl.classList.add('o');document.body.style.overflow='hidden'}
+pmEl.addEventListener('click',e=>{if(e.target==pmEl||e.target.closest('.pm-x')){pmEl.classList.remove('o');document.body.style.overflow=''}});
+addEventListener('keydown',e=>{if(e.key=='Escape'&&pmEl.classList.contains('o')){pmEl.classList.remove('o');document.body.style.overflow=''}});
 // ---- admin (hanya pemilik/editor; menerbitkan ulang halaman dengan data tertanam)
 const ra=()=>{$('#acl').innerHTML=E.a.map(a=>`<div class="ac"><b>${esc(a.t)}</b><span>${esc(a.v||'[data belum tersedia]')}</span></div>`).join('');$('#qsl').innerHTML=E.q.map(q=>`<div class="q"><p>“${esc(q.q)}”</p><small>${esc(q.w)}</small></div>`).join('')};ra();
 // WIB clock
